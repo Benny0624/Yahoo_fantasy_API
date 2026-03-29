@@ -1,0 +1,34 @@
+league:
+  sport: mlb
+
+stats:
+  batting:
+    - R
+    - HR
+    - RBI
+    - SB
+    - OBP
+    - OPS
+  pitching:
+    - QS
+    - SV+HLD
+    - K
+    - ERA
+    - WHIP
+    - K/BB
+
+free_agents:
+  # Yahoo MLB 常用 position key: C, 1B, 2B, 3B, SS, OF, SP, RP
+  positions:
+    - B   # 全部野手
+    - SP  # 先發投手
+    - RP  # 後援投手
+  count: 10  # 每個 position 抓幾人
+
+gemini:
+  model: gemini-1.5-flash
+  max_words: 500
+
+google_sheets:
+  sheet_id: ""          # 手動填入你的 Google Sheet ID
+  worksheet_name: daily_log

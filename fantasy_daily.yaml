@@ -1,0 +1,35 @@
+name: Daily Fantasy Advisor
+
+on:
+  schedule:
+    - cron: "30 22 * * *" # 每天台灣時間早上 6:30 執行 (UTC 22:30)
+  workflow_dispatch: # 允許手動執行測試
+
+jobs:
+  run-advisor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install 3.9
+
+      - name: Install Dependencies
+        run: uv sync
+
+      - name: Run Script
+        env:
+          YAHOO_OAUTH_JSON: ${{ secrets.YAHOO_OAUTH_JSON }}
+          YAHOO_LEAGUE_ID: ${{ secrets.YAHOO_LEAGUE_ID }}
+          YAHOO_TEAM_ID: ${{ secrets.YAHOO_TEAM_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
+        run: uv run python fantasy_daily.py

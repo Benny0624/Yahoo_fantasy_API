@@ -1,0 +1,18 @@
+[project]
+name = "yahoo-fantasy-mlb"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+    "yahoo-fantasy-api",
+    "yahoo-oauth",
+    "google-generativeai",
+    "line-bot-sdk",
+    "python-dotenv",
+    "pyyaml",
+    "gspread",
+    "google-auth",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
