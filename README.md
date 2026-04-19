@@ -130,11 +130,3 @@ uv run python fantasy_daily.py
 2. 建立 Service Account，下載 `service_account.json`，放到專案根目錄（不進 git）。
 3. 把 Service Account 的 email 加入你的 Google Sheet 的編輯權限。
 4. 在 `config.yaml` 的 `google_sheets.sheet_id` 填入 Sheet ID（網址中的那串字）。
-
-4. 工作
-
-- [x] 補上 uv 設定（pyproject.toml），執行 `uv sync` 即可安裝依賴
-- [x] 補上 .env.example，封裝 OAUTH/ANTHROPIC/LINE 等機敏變數
-- [x] 補上 config.yaml，MLB 計分指標與自由球員設定
-- [x] Google Sheets 歷史數據同步（選填，sheet_id 留空則跳過）
-- [x] 補上地端測試方法

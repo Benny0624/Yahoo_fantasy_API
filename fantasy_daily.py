@@ -8,8 +8,10 @@ from dotenv import load_dotenv
 from yahoo_oauth import OAuth2
 import yahoo_fantasy_api as yfa
 import anthropic
-from linebot import LineBotApi
-from linebot.models import TextSendMessage
+from linebot.v3.messaging import (
+    Configuration, ApiClient, MessagingApi,
+    PushMessageRequest, TextMessage as LineTextMessage,
+)
 
 load_dotenv()
 
@@ -99,18 +101,22 @@ def run_fantasy_advisor():
         messages=[{"role": "user", "content": prompt}],
     )
     advice = response.content[0].text
-    logger.info("Gemini 分析完成")
+    logger.info("Claude 分析完成")
 
     # 4. 寫入 Google Sheets（選填）
     today = str(date.today())
     write_to_google_sheets(today, roster, fa, advice)
 
     # 5. LINE 推播
-    line_bot = LineBotApi(os.environ.get("LINE_CHANNEL_ACCESS_TOKEN"))
-    line_bot.push_message(
-        os.environ.get("LINE_USER_ID"),
-        TextSendMessage(text=f"⚾ Fantasy 每日戰報 {today}：\n\n{advice}"),
-    )
+    configuration = Configuration(access_token=os.environ.get("LINE_CHANNEL_ACCESS_TOKEN"))
+    with ApiClient(configuration) as api_client:
+        line_bot = MessagingApi(api_client)
+        line_bot.push_message(
+            PushMessageRequest(
+                to=os.environ.get("LINE_USER_ID"),
+                messages=[LineTextMessage(text=f"⚾ Fantasy 每日戰報 {today}：\n\n{advice}")],
+            )
+        )
     logger.info("LINE 推播完成")
 
 
