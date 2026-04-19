@@ -25,8 +25,8 @@ free_agents:
     - RP  # 後援投手
   count: 10  # 每個 position 抓幾人
 
-gemini:
-  model: gemini-1.5-flash
+claude:
+  model: claude-opus-4-6
   max_words: 500
 
 google_sheets:

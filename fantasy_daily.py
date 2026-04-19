@@ -7,7 +7,7 @@ import yaml
 from dotenv import load_dotenv
 from yahoo_oauth import OAuth2
 import yahoo_fantasy_api as yfa
-import google.generativeai as genai
+import anthropic
 from linebot import LineBotApi
 from linebot.models import TextSendMessage
 
@@ -70,9 +70,8 @@ def run_fantasy_advisor():
     roster = team.roster()
     fa = get_free_agents(league)
 
-    # 3. Gemini 分析
-    genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-    model = genai.GenerativeModel(config["gemini"]["model"])
+    # 3. Claude 分析
+    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
     prompt = f"""
 你是一位專業的 Fantasy Baseball 數據分析師。
@@ -86,7 +85,7 @@ def run_fantasy_advisor():
 可撿的自由球員：
 {json.dumps(fa, ensure_ascii=False, indent=2)}
 
-請根據今日賽程與球員近況，給出 {config["gemini"]["max_words"]} 字以內的建議：
+請根據今日賽程與球員近況，給出 {config["claude"]["max_words"]} 字以內的建議：
 1. 今日最佳首發配置（依上述打擊/投球指標）。
 2. 建議撿起哪位自由球員並丟掉誰，對哪些指標有幫助。
 3. 本週勝率評估。
@@ -94,8 +93,12 @@ def run_fantasy_advisor():
 請用繁體中文回答。
 """
 
-    response = model.generate_content(prompt)
-    advice = response.text
+    response = client.messages.create(
+        model=config["claude"]["model"],
+        max_tokens=1024,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    advice = response.content[0].text
     logger.info("Gemini 分析完成")
 
     # 4. 寫入 Google Sheets（選填）
