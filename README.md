@@ -34,6 +34,7 @@ Yahoo_fantasy_API/
 ### 前置步驟
 
 **Step 1：安裝 uv（只需做一次）**
+
 ```bash
 winget install astral-sh.uv
 ```
@@ -41,15 +42,18 @@ winget install astral-sh.uv
 **Step 2：建立乾淨的虛擬環境並安裝依賴**
 
 若是全新安裝（或想重建乾淨環境）：
+
 ```bash
 cd Yahoo_fantasy_API
 # 若已有舊的 .venv，先刪除
 rm -rf .venv
 uv sync
 ```
+
 `uv sync` 會自動建立 `.venv` 虛擬環境並安裝所有依賴，產生 `uv.lock`。
 
 啟用虛擬環境（可選，`uv run` 會自動使用 `.venv`，不需手動啟用）：
+
 ```bash
 # Windows (PowerShell)
 .venv\Scripts\Activate.ps1
@@ -62,20 +66,22 @@ source .venv/bin/activate
 > 注意：若 `uv sync` 出現 access denied 錯誤，代表 `.venv` 被其他程序（IDE、terminal）佔用，關閉後重試。
 
 **Step 3：設定環境變數**
+
 ```bash
 cp .env.example .env
 ```
+
 編輯 `.env`，填入以下變數：
 
-| 變數名稱 | 說明 |
-|---|---|
-| `YAHOO_OAUTH_JSON` | yahoo oauth2.json 的完整 JSON 字串 |
-| `YAHOO_LEAGUE_ID` | 聯盟 ID（在 Yahoo Fantasy 網址可找到） |
-| `YAHOO_TEAM_ID` | 你的隊伍 ID |
-| `ANTHROPIC_API_KEY` | Anthropic Console 取得（console.anthropic.com） |
-| `LINE_CHANNEL_ACCESS_TOKEN` | LINE Developers 後台取得 |
-| `LINE_USER_ID` | 你的 LINE User ID |
-| `GOOGLE_SHEET_ID` | （選填）Google Sheet 的 ID，留空則跳過寫入 |
+| 變數名稱                    | 說明                                            |
+| --------------------------- | ----------------------------------------------- |
+| `YAHOO_OAUTH_JSON`          | yahoo oauth2.json 的完整 JSON 字串              |
+| `YAHOO_LEAGUE_ID`           | 聯盟 ID（在 Yahoo Fantasy 網址可找到）          |
+| `YAHOO_TEAM_ID`             | 你的隊伍 ID                                     |
+| `ANTHROPIC_API_KEY`         | Anthropic Console 取得（console.anthropic.com） |
+| `LINE_CHANNEL_ACCESS_TOKEN` | LINE Developers 後台取得                        |
+| `LINE_USER_ID`              | 你的 LINE User ID                               |
+| `GOOGLE_SHEET_ID`           | （選填）Google Sheet 的 ID，留空則跳過寫入      |
 
 **Step 4：取得 Yahoo OAuth Token**
 
@@ -94,24 +100,48 @@ cp .env.example .env
 **Step 4-2：執行 OAuth 授權**
 
 先建立只含 consumer key/secret 的 `oauth2.json`：
+
 ```json
 {
-    "consumer_key": "你的_consumer_key",
-    "consumer_secret": "你的_consumer_secret"
+  "consumer_key": "你的_consumer_key",
+  "consumer_secret": "你的_consumer_secret"
 }
 ```
 
 再跑授權：
+
 ```bash
 uv run python -c "
 from yahoo_oauth import OAuth2
 sc = OAuth2(None, None, from_file='oauth2.json')
 "
 ```
+
 瀏覽器開啟後登入對應的 Yahoo 帳號完成授權，`oauth2.json` 會自動更新加入 token。
 之後把 `oauth2.json` 的內容整個複製（單行 JSON），貼進 `.env` 的 `YAHOO_OAUTH_JSON=` 後面。
 
 > 注意：`YAHOO_LEAGUE_ID` 格式為 `458.l.XXXXXX`，`YAHOO_TEAM_ID` 格式為 `458.l.XXXXXX.t.N`，可從 Yahoo Fantasy 網址取得。
+
+**Step 4-3：檢查 Token 是否過期**
+
+```bash
+uv run python -c "
+import os, json
+from dotenv import load_dotenv
+from yahoo_oauth import OAuth2
+
+load_dotenv()
+with open('oauth2.json', 'w') as f:
+    f.write(os.environ.get('YAHOO_OAUTH_JSON'))
+
+sc = OAuth2(None, None, from_file='oauth2.json')
+print('Token valid:', sc.token_is_valid())
+print('Access token:', sc.access_token[:20], '...')
+"
+```
+
+若 `Token valid: False`，`yahoo_oauth` 會自動用 refresh token 刷新並更新 `oauth2.json`。
+刷新後需重新把 `oauth2.json` 內容貼進 `.env` 的 `YAHOO_OAUTH_JSON=` 與 GitHub Secret。
 
 ### 執行測試
 
@@ -126,7 +156,40 @@ uv run python fantasy_daily.py
 ### Google Sheets 設定（選填）
 
 若要啟用 Google Sheets 寫入：
+
 1. 在 [Google Cloud Console](https://console.cloud.google.com) 建立專案，啟用 Google Sheets API。
 2. 建立 Service Account，下載 `service_account.json`，放到專案根目錄（不進 git）。
 3. 把 Service Account 的 email 加入你的 Google Sheet 的編輯權限。
 4. 在 `config.yaml` 的 `google_sheets.sheet_id` 填入 Sheet ID（網址中的那串字）。
+
+### GitHub Actions 設定
+
+#### Step 1：Push workflow 檔案
+
+```bash
+git add .github/workflows/fantasy_daily.yaml
+git commit -m "feat: add GitHub Actions workflow"
+git push
+```
+
+#### Step 2：在 GitHub 設定 Secrets
+
+repo 頁面 → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+
+逐一加入以下 secrets：
+
+| Secret 名稱                 | 值來源                                                           |
+| --------------------------- | ---------------------------------------------------------------- |
+| `YAHOO_OAUTH_JSON`          | `oauth2.json` 的完整內容（單行 JSON）                            |
+| `YAHOO_LEAGUE_ID`           | 例如 `458.l.82922`                                               |
+| `YAHOO_TEAM_ID`             | 例如 `458.l.82922.t.6`                                           |
+| `ANTHROPIC_API_KEY`         | [Anthropic Console](https://console.anthropic.com/settings/keys) |
+| `LINE_CHANNEL_ACCESS_TOKEN` | LINE Developers Console                                          |
+| `LINE_USER_ID`              | 你的 LINE User ID                                                |
+
+> 注意：Secrets 要在第一次觸發 workflow 前設定好，否則程式會因環境變數為空而失敗。
+
+#### Step 3：觸發方式
+
+- **自動**：每天台灣時間 21:00 自動執行（可在 `.github/workflows/fantasy_daily.yaml` 的 `cron` 調整）
+- **手動**：repo 頁面 → **Actions** → **Fantasy Daily** → **Run workflow**

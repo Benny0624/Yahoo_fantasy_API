@@ -1,0 +1,31 @@
+name: Fantasy Daily
+
+on:
+  schedule:
+    - cron: "0 13 * * *" # 每天 UTC 13:00 = 台灣時間 21:00
+  workflow_dispatch: # 允許手動觸發
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    environment: YahooFatasyAdvisor
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run fantasy_daily.py
+        env:
+          YAHOO_OAUTH_JSON: ${{ secrets.YAHOO_OAUTH_JSON }}
+          YAHOO_LEAGUE_ID: ${{ secrets.YAHOO_LEAGUE_ID }}
+          YAHOO_TEAM_ID: ${{ secrets.YAHOO_TEAM_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+        run: uv run python fantasy_daily.py

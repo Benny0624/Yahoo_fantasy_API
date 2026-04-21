@@ -43,7 +43,11 @@ def write_to_google_sheets(today: str, roster, fa, advice: str):
     from google.oauth2.service_account import Credentials
 
     scopes = ["https://www.googleapis.com/auth/spreadsheets"]
-    creds = Credentials.from_service_account_file("service_account.json", scopes=scopes)
+    sa_json = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
+    if sa_json:
+        creds = Credentials.from_service_account_info(json.loads(sa_json), scopes=scopes)
+    else:
+        creds = Credentials.from_service_account_file("service_account.json", scopes=scopes)
     gc = gspread.authorize(creds)
 
     sh = gc.open_by_key(sheet_id)
