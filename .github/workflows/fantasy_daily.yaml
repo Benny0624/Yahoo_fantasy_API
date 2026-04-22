@@ -2,7 +2,7 @@ name: Fantasy Daily
 
 on:
   schedule:
-    - cron: "0 13 * * *" # 每天 UTC 13:00 = 台灣時間 21:00
+    - cron: "30 04 * * *" # 每天 UTC 04:30 = 台灣時間 12:30
   workflow_dispatch: # 允許手動觸發
 
 jobs:
@@ -28,4 +28,6 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GOOGLE_SHEET_ID: ${{ secrets.GOOGLE_SHEET_ID }}
         run: uv run python fantasy_daily.py

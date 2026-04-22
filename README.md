@@ -191,5 +191,5 @@ repo 頁面 → **Settings** → **Secrets and variables** → **Actions** → *
 
 #### Step 3：觸發方式
 
-- **自動**：每天台灣時間 21:00 自動執行（可在 `.github/workflows/fantasy_daily.yaml` 的 `cron` 調整）
+- **自動**：每天台灣時間 12:30 自動執行（可在 `.github/workflows/fantasy_daily.yaml` 的 `cron` 調整）
 - **手動**：repo 頁面 → **Actions** → **Fantasy Daily** → **Run workflow**

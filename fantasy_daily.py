@@ -10,7 +10,7 @@ import yahoo_fantasy_api as yfa
 import anthropic
 from linebot.v3.messaging import (
     Configuration, ApiClient, MessagingApi,
-    PushMessageRequest, TextMessage as LineTextMessage,
+    BroadcastRequest, TextMessage as LineTextMessage,
 )
 
 load_dotenv()
@@ -115,9 +115,8 @@ def run_fantasy_advisor():
     configuration = Configuration(access_token=os.environ.get("LINE_CHANNEL_ACCESS_TOKEN"))
     with ApiClient(configuration) as api_client:
         line_bot = MessagingApi(api_client)
-        line_bot.push_message(
-            PushMessageRequest(
-                to=os.environ.get("LINE_USER_ID"),
+        line_bot.broadcast(
+            BroadcastRequest(
                 messages=[LineTextMessage(text=f"⚾ Fantasy 每日戰報 {today}：\n\n{advice}")],
             )
         )
