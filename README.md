@@ -8,11 +8,11 @@
   - 包含己方與敵方當日球員配置、當日自由球員名單
   - 計分指標（打擊）：R, HR, RBI, SB, OBP, OPS
   - 計分指標（投球）：QS, SV+HLD, K, ERA, WHIP, K/BB
-  - AI Analysis: 將數據餵給 Claude Opus 4.6，並產出以下。
-  - 配置建議(如誰該上場誰不該上場)
-  - 自由球員撿取建議(自由球員有沒有適合撿來補強目前陣容缺乏數據)
-  - 勝率分析
-  - Notification: 呼叫 LINE Messaging API 推送結果。
+  - AI Analysis: 將數據餵給 Claude Opus 4.6，產出三段精簡建議（總字數由 `config.yaml` 的 `claude.max_words` 控制）。
+  - 【首發調整】：只指出放板凳但該上場、或在場上但不該出賽的球員；沒問題則顯示「首發無調整」。
+  - 【最值得撿的自由球員】：打擊、投手各推薦 1 人，附理由與對應指標；無合適人選則顯示「無推薦」。
+  - 【本週勝負預測】：一句話評估。
+  - Notification: 呼叫 LINE Messaging API 推送結果；訊息超過 5000 字元時自動拆分多則發送。
   - Storage（選填）: 將每日數據與建議寫入 Google Sheets 留存。
 
 2. 檔案結構

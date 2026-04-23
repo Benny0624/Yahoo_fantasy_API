@@ -80,7 +80,7 @@ def run_fantasy_advisor():
     client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
     prompt = f"""
-你是一位專業的 Fantasy Baseball 數據分析師。
+你是一位精簡的 Fantasy Baseball 顧問。
 本聯盟計分指標：
   打擊：{", ".join(BATTING_CATS)}
   投球：{", ".join(PITCHING_CATS)}
@@ -91,17 +91,26 @@ def run_fantasy_advisor():
 可撿的自由球員：
 {json.dumps(fa, ensure_ascii=False, indent=2)}
 
-請根據今日賽程與球員近況，給出 {config["claude"]["max_words"]} 字以內的建議：
-1. 今日最佳首發配置（依上述打擊/投球指標）。
-2. 建議撿起哪位自由球員並丟掉誰，對哪些指標有幫助。
-3. 本週勝率評估。
+請根據今日賽程與球員近況，用繁體中文給出簡短建議，總字數控制在 {config["claude"]["max_words"]} 字以內：
 
-請用繁體中文回答。
+【首發調整】
+- 只指出「放板凳但今天應該上場」或「在場上但今天不該出賽」的球員，沒問題就說「首發無調整」。
+
+【最值得撿的自由球員】
+- 打擊推薦 1 人：姓名、理由一句話、對哪個指標最有幫助。
+- 投手推薦 1 人：同上。
+- 若沒有值得撿的就說「無推薦」。
+
+【本週勝負預測】
+- 一句話評估即可。
+
+注意：總回覆必須在 {config["claude"]["max_words"]} 字以內，超過請刪減，絕對不可超字。
 """
 
+    max_words = config["claude"]["max_words"]
     response = client.messages.create(
         model=config["claude"]["model"],
-        max_tokens=1024,
+        max_tokens=max_words * 2,  # 每個中文字約 1–2 token，乘 2 留緩衝但仍有上限
         messages=[{"role": "user", "content": prompt}],
     )
     advice = response.content[0].text
@@ -111,15 +120,17 @@ def run_fantasy_advisor():
     today = str(date.today())
     write_to_google_sheets(today, roster, fa, advice)
 
-    # 5. LINE 推播
+    # 5. LINE 推播（單則上限 5000 字，超過自動分拆，每次最多 5 則）
+    LINE_LIMIT = 5000
+    full_text = f"⚾ Fantasy 每日戰報 {today}：\n\n{advice}"
+    chunks = [full_text[i:i + LINE_LIMIT] for i in range(0, len(full_text), LINE_LIMIT)]
+
     configuration = Configuration(access_token=os.environ.get("LINE_CHANNEL_ACCESS_TOKEN"))
     with ApiClient(configuration) as api_client:
         line_bot = MessagingApi(api_client)
-        line_bot.broadcast(
-            BroadcastRequest(
-                messages=[LineTextMessage(text=f"⚾ Fantasy 每日戰報 {today}：\n\n{advice}")],
-            )
-        )
+        for batch_start in range(0, len(chunks), 5):
+            batch = [LineTextMessage(text=c) for c in chunks[batch_start:batch_start + 5]]
+            line_bot.broadcast(BroadcastRequest(messages=batch))
     logger.info("LINE 推播完成")
 
 
